@@ -1,0 +1,8 @@
+numpy
+scikit-learn
+pyspark
+pandas
+PyArrow
+dataclasses
+matplotlib
+-e .
