@@ -5,4 +5,7 @@ pandas
 PyArrow
 dataclasses
 matplotlib
+psycopg2 
+python-dotenv 
+tqdm
 -e .

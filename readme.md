@@ -2,6 +2,7 @@
 
 - Jetson ORIN AGX
 - PySpark
+- Load large data from PostreSQL
 
 The goal of a model using this dataset would likely be to predict whether a user will answer a question correctly based on features like user interactions, content metadata, and historical performance.
 
@@ -74,3 +75,13 @@ Features to Consider for the Model:
     `tag`: one tag codes for the lecture. The meaning of the tags will not be provided, but these codes are sufficient for clustering the lectures together.
 
     `type_of`: brief description of the core purpose of the lecture
+
+## Measure 
+
+### Load df Time
+
+- 5.5G data
+
+|  | PostreSQL  | Local |
+|-------------| ------------- | ------------- |
+| Time | 00:00:03 | 00:00:51  |

@@ -29,9 +29,9 @@ class ModelTrainer:
         try:
             classifiers = {
                 "Logistic Regression": LogisticRegression(labelCol="answered_correctly", featuresCol="features"),
-                "Random Forest": RandomForestClassifier(labelCol="answered_correctly", featuresCol="features"),
-                "Gradient Boosting": GBTClassifier(labelCol="answered_correctly", featuresCol="features"),
-                "Decision Tree": DecisionTreeClassifier(labelCol="answered_correctly", featuresCol="features")
+                # "Random Forest": RandomForestClassifier(labelCol="answered_correctly", featuresCol="features"),
+                # "Gradient Boosting": GBTClassifier(labelCol="answered_correctly", featuresCol="features"),
+                # "Decision Tree": DecisionTreeClassifier(labelCol="answered_correctly", featuresCol="features")
             }
             
             # Define the evaluator
