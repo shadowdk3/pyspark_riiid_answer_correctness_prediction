@@ -12,6 +12,12 @@ from pyspark.sql.functions import col, mean, sum
 
 from sklearn.model_selection import train_test_split
 
+from src.components.data_transformation import DataTransformation
+from src.components.model_trainer import ModelTrainer
+
+# from pyspark.ml.feature import VectorAssembler, StringIndexer, OneHotEncoder
+# from pyspark.sql.functions import col, mean, sum
+
 @dataclass
 class SparkConfig:
     '''
@@ -38,9 +44,10 @@ class SparkConfig:
 class DataIngestionConfig:
     train_data_path: str=os.path.join('artifacts', "train.csv")
     test_data_path: str=os.path.join('artifacts', "test.csv")
-    raw_data_path: str=os.path.join(src.utils.ProjectPathConfig().PROJECTPATH, 'data/train.csv')
-    questions_data_path: str=os.path.join(src.utils.ProjectPathConfig().PROJECTPATH, 'data/questions.csv')
-    lectures_data_path: str=os.path.join(src.utils.ProjectPathConfig().PROJECTPATH, 'data/lectures.csv')
+    data_path: str=os.path.join('artifacts', 'data.csv')
+    raw_data_path: str=os.path.join('data', 'train.csv')
+    questions_data_path: str=os.path.join('data', 'questions.csv')
+    lectures_data_path: str=os.path.join('data', 'lectures.csv')
         
 class DataIngestion:
     def __init__(self):
@@ -50,38 +57,21 @@ class DataIngestion:
         logging.info("Entered the data ingestion method or compont")
         try:
             os.makedirs(os.path.dirname(self.ingestion_config.train_data_path), exist_ok=True)
+            
             logging.info('Read the dataset as dataframe')
-                        
             df = spark.read.csv(self.ingestion_config.raw_data_path, header=True, inferSchema=True)
-            df_sample = df.sample(withReplacement=False, fraction=0.1)
+            sampled_df = df.sample(withReplacement=False, fraction=0.1)
             questions_df = spark.read.csv(self.ingestion_config.questions_data_path, header=True, inferSchema=True)
             lectures_df = spark.read.csv(self.ingestion_config.lectures_data_path, header=True, inferSchema=True)
-            
-            # Combine DataFrames
-            train_questions_df = df_sample.join(questions_df, df_sample.content_id == questions_df.question_id, how='left')
+
+            # 2. Join DataFrames
+            logging.info('Join DataFrames')
+            train_questions_df = sampled_df.join(questions_df, sampled_df.content_id == questions_df.question_id, how='left')
             full_df = train_questions_df.join(lectures_df, train_questions_df.content_id == lectures_df.lecture_id, how='left')
 
-            logging.info("Combine questions.csv and lectures.csv with train.csv")
-            
-            # Capture the output
-            old_stdout = sys.stdout  # Save the original stdout
-            new_stdout = io.StringIO()  # Create a new StringIO object to capture the output
-            sys.stdout = new_stdout  # Redirect stdout to the StringIO object
-
-            full_df.printSchema()
-            
-            # Reset stdout to the original value
-            sys.stdout = old_stdout
-
-            # Get the output from StringIO
-            logging.info("%s", new_stdout.getvalue())
-
-            logging.info("Rename column name in 'part' in questions.csv and lectures.csv")
-            logging.info("Remove column row_id")
-            
             # Select specific columns to avoid ambiguity
             full_df = full_df.select(
-                "row_id", "timestamp", "user_id", "content_id", "content_type_id", "task_container_id",
+                "timestamp", "user_id", "content_id", "content_type_id", "task_container_id",
                 "user_answer", "answered_correctly", "prior_question_elapsed_time", "prior_question_had_explanation",
                 "question_id", "lecture_id",
                 questions_df["part"].alias("question_part"),  # Rename question part
@@ -89,21 +79,17 @@ class DataIngestion:
                 "bundle_id", "correct_answer", "tags", "tag", "type_of"
             )
 
-            logging.info("After select specific columns")
-            
-            new_stdout.truncate(0)
+            # Capture the output
+            old_stdout = sys.stdout  # Save the original stdout
+            new_stdout = io.StringIO()  # Create a new StringIO object to capture the output
             sys.stdout = new_stdout  # Redirect stdout to the StringIO object
-            full_df.printSchema()
-            sys.stdout = old_stdout
-            
-            # Get the output from StringIO
-            logging.info("%s", new_stdout.getvalue())
 
-            logging.info("Filter out rows with -1 in the answered_correctly column")
-            full_df = full_df.filter(full_df.answered_correctly >= 0)
+            full_df.printSchema()
+
+            sys.stdout = old_stdout
+            logging.info("%s", new_stdout.getvalue())
             
             logging.info("Handle nulls in numerical columns")
-            
             logging.info("Fill nulls in 'prior_question_elapsed_time' with the mean value")
             mean_elapsed_time = full_df.select(mean(col('prior_question_elapsed_time'))).collect()[0][0]
             full_df = full_df.fillna({"prior_question_elapsed_time": mean_elapsed_time})
@@ -116,33 +102,32 @@ class DataIngestion:
 
             logging.info("Handle nulls in 'correct_answer' and 'question_part' (fill with -1 as placeholder for missing data)")
             full_df = full_df.fillna({"correct_answer": -1, "question_part": -1})
+            
+            full_df = full_df.filter(full_df.answered_correctly >= 0)
+            
+            full_df.select([col(c).isNull().alias(c) for c in full_df.columns]).show()
+
+            logging.info("Dataframe after handle Null")
 
             new_stdout.truncate(0)
             sys.stdout = new_stdout  # Redirect stdout to the StringIO object
-            full_df.select([col(c).isNull().alias(c) for c in full_df.columns]).show()
+            full_df.printSchema()
             sys.stdout = old_stdout
-            
-            # Get the output from StringIO
             logging.info("%s", new_stdout.getvalue())
-            
-            logging.info("Train test split initiated")
+    
             train_data, test_data = full_df.randomSplit([0.8, 0.2], seed=42)
-
-            logging.info(f"Training Data Count: {train_data.count()}")
-            logging.info(f"Testing Data Count: {test_data.count()}")
             
-            # convert to pandas
             train_df_pandas = train_data.toPandas()
             test_df_pandas  = test_data.toPandas()
             
             train_df_pandas.to_csv(self.ingestion_config.train_data_path, index=False, header=True)
             test_df_pandas.to_csv(self.ingestion_config.test_data_path, index=False, header=True)
             
-            logging.info("Ingestion of the data is completed")
-        
+            logging.info("data save.")
+
             return(
                 self.ingestion_config.train_data_path,
-                self.ingestion_config.test_data_path,
+                self.ingestion_config.test_data_path
             )
                     
         except Exception as e:
@@ -153,3 +138,15 @@ if __name__ == "__main__":
     
     obj = DataIngestion()
     train_data_path, test_data_path = obj.initiate_data_ingestion(spark)
+    
+    data_transformation = DataTransformation()
+    train_data_transformed, test_data_transformed, _ = data_transformation.initiate_data_transformation(spark, train_data_path, test_data_path)
+
+    modeltrainer = ModelTrainer()
+    model_name, accuracy = modeltrainer.initiate_model_trainer(train_data_transformed, test_data_transformed)
+    
+    # Show model accuracy
+    print(f"Model: {model_name} with Accuracy: {accuracy}")
+            
+    spark.stop()
+    
