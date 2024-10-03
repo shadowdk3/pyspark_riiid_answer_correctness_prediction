@@ -16,6 +16,7 @@ from pyspark.ml.classification import (
     GBTClassifier, 
     DecisionTreeClassifier
 )
+from pyspark.ml.tuning import ParamGridBuilder, CrossValidator
 
 @dataclass
 class ModelTrainerConfig:
@@ -48,11 +49,30 @@ class ModelTrainer:
             for model_name, classifier in classifiers.items():
                 logging.info(f"Training {model_name} Model:")
                 
-                # Fit the model on training data
-                model = classifier.fit(train_data_transformed)
+                # Create a parameter grid for hyperparameter tuning
+                param_grid = ParamGridBuilder() \
+                    .addGrid(classifier.regParam, [0.01, 0.1, 1.0]) \
+                    .addGrid(classifier.maxIter, [10, 50, 100]) \
+                    .build()
+
+                # Create a CrossValidator for hyperparameter tuning
+                crossval = CrossValidator(estimator=classifier,
+                                        estimatorParamMaps=param_grid,
+                                        evaluator=evaluator,
+                                        numFolds=5)  # 5-fold cross-validation
+
+                # Fit the model using CrossValidator
+                cv_model = crossval.fit(train_data_transformed)
+
+                # Get the best model from cross-validation
+                best_cv_model = cv_model.bestModel
+
+                logging.info(f"Best Parameters for {model_name}:")
+                logging.info(f" - Regularization Parameter (regParam): {best_cv_model.getRegParam()}")
+                logging.info(f" - Max Iterations: {best_cv_model.getMaxIter()}")
                 
                 # Make predictions on test data
-                predictions = model.transform(test_data_transformed)
+                predictions = best_cv_model.transform(test_data_transformed)
                 
                 # Evaluate the model
                 accuracy = evaluator.evaluate(predictions)
@@ -65,7 +85,7 @@ class ModelTrainer:
                 if accuracy > best_accuracy:
                     best_accuracy = accuracy
                     best_model_name = model_name
-                    best_model = model
+                    best_model = best_cv_model
 
             # Log the best model's accuracy
             logging.info(f"Best Model: {best_model} with Accuracy: {best_accuracy}")

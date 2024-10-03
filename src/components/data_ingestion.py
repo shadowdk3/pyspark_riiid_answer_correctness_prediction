@@ -33,12 +33,16 @@ class SparkConfig:
                         
     spark = SparkSession.builder \
         .appName('tutorial') \
-        .config('spark.executor.memory', '4g') \
-        .config('spark.driver.memory', '4g') \
-        .config('spark.sql.shuffle.partitions', '50') \
+        .config('spark.executor.memory', '8g') \
+        .config('spark.driver.memory', '8g') \
+        .config('spark.sql.shuffle.partitions', '200') \
         .config('spark.memory.fraction', '0.6') \
+        .config("spark.executor.cores", '2') \
+        .config("spark.executor.instances", '2') \
         .config('spark.sql.execution.arrow.pyspark.enabled', 'true') \
         .config("spark.jars", '/usr/local/lib/postgresql-42.2.24.jar') \
+        .config("spark.executor.extraJavaOptions", "-XX:+UseG1GC -XX:InitiatingHeapOccupancyPercent=35") \
+        .config("spark.driver.extraJavaOptions", "-XX:+UseG1GC -XX:InitiatingHeapOccupancyPercent=35") \
         .getOrCreate()
 
 @dataclass
@@ -60,29 +64,29 @@ class DataIngestion:
         try:
             os.makedirs(os.path.dirname(self.ingestion_config.train_data_path), exist_ok=True)
             
-            logging.info('Load dataset from postresql, read the dataset as dataframe')
-            start_time = time.time()
-            df = self.loader.load_data(
-                spark=spark,
-                table_name="raw_data",
-                partition_column="row_id",  # Assume 'id' is a column used for partitioning
-                lower_bound=1,
-                upper_bound=1000000,
-                num_partitions=10,
-                fetch_size=5000
-            )
-            end_time = time.time()
-            execution_time = end_time - start_time
-            formatted_time = src.utils.format_duration(execution_time)
-            logging.info(f'Execuate Time for load dataset form postresql: {formatted_time}')
-            
-            # logging.info('Load dataset from local, read the dataset as dataframe')
+            # logging.info('Load dataset from postresql, read the dataset as dataframe')
             # start_time = time.time()
-            # df = spark.read.csv(self.ingestion_config.raw_data_path, header=True, inferSchema=True)
+            # df = self.loader.load_data(
+            #     spark=spark,
+            #     table_name="raw_data",
+            #     partition_column="row_id",  # Assume 'id' is a column used for partitioning
+            #     lower_bound=1,
+            #     upper_bound=1000000,
+            #     num_partitions=10,
+            #     fetch_size=5000
+            # )
             # end_time = time.time()
             # execution_time = end_time - start_time
             # formatted_time = src.utils.format_duration(execution_time)
-            # logging.info(f'Execuate Time for load dataset form local: {formatted_time}')
+            # logging.info(f'Execuate Time for load dataset form postresql: {formatted_time}')
+            
+            logging.info('Load dataset from local, read the dataset as dataframe')
+            start_time = time.time()
+            df = spark.read.csv(self.ingestion_config.raw_data_path, header=True, inferSchema=True)
+            end_time = time.time()
+            execution_time = end_time - start_time
+            formatted_time = src.utils.format_duration(execution_time)
+            logging.info(f'Execuate Time for load dataset form local: {formatted_time}')
             
             sampled_df = df.sample(withReplacement=False, fraction=0.1)
             questions_df = spark.read.csv(self.ingestion_config.questions_data_path, header=True, inferSchema=True)
