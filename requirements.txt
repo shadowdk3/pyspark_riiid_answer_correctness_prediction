@@ -8,4 +8,5 @@ matplotlib
 psycopg2 
 python-dotenv 
 tqdm
+flask
 -e .

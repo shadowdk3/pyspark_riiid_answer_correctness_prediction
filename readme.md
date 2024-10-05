@@ -86,3 +86,7 @@ Features to Consider for the Model:
 |  | PostreSQL  | Local |
 |-------------| ------------- | ------------- |
 | Time | 00:00:03 | 00:00:51  |
+
+## Flask
+
+![](/ref/flask.png)

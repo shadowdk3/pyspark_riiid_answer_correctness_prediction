@@ -15,6 +15,10 @@ from pyspark.ml import PipelineModel
 from pyspark.sql import SparkSession
 import psycopg2.extras
 
+from pyspark.ml.tuning import CrossValidatorModel
+from pyspark.ml.classification import LogisticRegressionModel
+from pyspark.ml import PipelineModel
+
 @dataclass
 class ProjectPathConfig:
     FILEPATH = os.path.dirname(os.path.abspath(__file__))
@@ -27,9 +31,23 @@ def save_spark_object(file_path, obj):
     except Exception as e:
         raise CustomException(e, sys)
     
-def load_spark_object(file_path):
+def load_spark_pipeline(file_path):
     try:
         return PipelineModel.load(file_path)
+
+    except Exception as e:
+        raise CustomException(e, sys)
+
+def load_cross_validator_model(file_path):
+    try:
+        return CrossValidatorModel.load(file_path)
+
+    except Exception as e:
+        raise CustomException(e, sys)
+    
+def load_logistic_regression_model(file_path):
+    try:
+        return LogisticRegressionModel.load(file_path)
 
     except Exception as e:
         raise CustomException(e, sys)

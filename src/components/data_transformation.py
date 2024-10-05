@@ -37,7 +37,6 @@ class DataTransformation:
                 'timestamp', 
                 'user_id', 
                 'content_id', 
-                'content_type_id', 
                 'task_container_id', 
                 'user_answer', 
                 'prior_question_elapsed_time',
@@ -45,8 +44,8 @@ class DataTransformation:
                 'lecture_part', 
                 'bundle_id', 
                 'correct_answer', 
-                'tags_onehot',
-                'type_of_onehot'
+                # 'tags_onehot',
+                # 'type_of_onehot'
             ]
 
             # Initialize the VectorAssembler with the updated column list
@@ -57,10 +56,10 @@ class DataTransformation:
 
             # Create a Pipeline with the stages
             preprocessor = Pipeline(stages=[
-                tags_indexer, 
-                type_of_indexer, 
-                tags_encoder, 
-                type_of_encoder, 
+                # tags_indexer, 
+                # type_of_indexer, 
+                # tags_encoder, 
+                # type_of_encoder, 
                 assembler
             ])
     
@@ -98,7 +97,7 @@ class DataTransformation:
                         
             src.utils.save_spark_object(
                 file_path = self.data_transformation_config.preprocessor_obj_file_path, 
-                obj=preprocessing_obj)
+                obj=pipeline_model)
             
             return(
                 train_data_transformed,
