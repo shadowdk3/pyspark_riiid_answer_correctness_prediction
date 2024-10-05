@@ -9,4 +9,5 @@ psycopg2
 python-dotenv 
 tqdm
 flask
+flask-cors
 -e .

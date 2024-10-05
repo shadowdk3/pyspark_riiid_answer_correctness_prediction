@@ -4,6 +4,8 @@
 - PySpark
 - Load large data from PostreSQL
 - Cross Validator
+- Flask with HTML
+- Flask with React
 
 The goal of a model using this dataset would likely be to predict whether a user will answer a question correctly based on features like user interactions, content metadata, and historical performance.
 
@@ -19,6 +21,18 @@ chmod +x srcipt/setup-venv.sh
 
 ```
 sudo apt-get install openjdk-8-jre openjdk-8-jdk
+```
+
+## Install React
+
+```
+sudo apt-get update
+sudo apt-get install curl
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs npm
+
+npm install axios
+npm install react-router-dom
 ```
 
 ### Dataset
@@ -90,3 +104,7 @@ Features to Consider for the Model:
 ## Flask
 
 ![](/ref/flask.png)
+
+## React
+
+![](/ref/react.png)
