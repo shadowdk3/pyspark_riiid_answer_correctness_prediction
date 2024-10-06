@@ -7,6 +7,7 @@
 - Flask with HTML
 - Flask with React
 - Docker for deploy
+- Auto test in Github (pytest)
  
 The goal of a model using this dataset would likely be to predict whether a user will answer a question correctly based on features like user interactions, content metadata, and historical performance.
 

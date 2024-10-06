@@ -10,4 +10,5 @@ python-dotenv
 tqdm
 flask
 flask-cors
+pytest
 -e .
