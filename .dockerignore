@@ -1,0 +1,19 @@
+# Ignore virtual environment
+venv/
+
+# Ignore other unnecessary files
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+.env
+
+# Ignore folder
+*.egg-info/
+ref/
+logs/
+data/
+notebook/
+script/

@@ -6,7 +6,8 @@
 - Cross Validator
 - Flask with HTML
 - Flask with React
-
+- Docker for deploy
+ 
 The goal of a model using this dataset would likely be to predict whether a user will answer a question correctly based on features like user interactions, content metadata, and historical performance.
 
 ## Setup Environment 
@@ -100,6 +101,14 @@ Features to Consider for the Model:
 |  | PostreSQL  | Local |
 |-------------| ------------- | ------------- |
 | Time | 00:00:03 | 00:00:51  |
+
+## Docker 
+
+```
+cd /path/to/project
+docker build -t flask-react-app .
+docker run -it -p 5000:5000 flask-react-app
+```
 
 ## Flask
 
