@@ -20,11 +20,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Copy necessary files
-        run: |
-          # Copy any necessary files to the expected locations, if needed
-          cp -r artifacts ./artifacts  # Adjust this based on your project structure
-          
       - name: Run pytest
         run: |
           export PYTHONPATH=${{ github.workspace }}
